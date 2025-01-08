@@ -90,7 +90,7 @@
             <th>ROLE</th>
             <th>FAKULTAS/UNIT KERJA</th>
             <th>PRODI</th>
-            {{-- <th>ACTION</th> --}}
+            <th>ACTION</th>
         </tr>
         @forelse ($userTable as $item)
         <tr>
@@ -126,13 +126,13 @@
                     {{ $item->prodi?->nama_resmi }}
                 @endif
             </td>
-            {{-- <td>
+            <td>
                 @if ($item->email != auth()->user()->email)
-                <button wire:click="del('{{$item->id}}')" class="btn btn-xs btn-danger" data-bs-toggle="modal" data-bs-target="#userdel">Delete</button>
-                @else
-                <button class="btn btn-xs btn-warning">Your Account</button>
+                    @if ($item->email != '198806032019013001')
+                        <button wire:click="del('{{$item->id}}')" class="btn btn-xs btn-danger" data-bs-toggle="modal" data-bs-target="#userdel">Delete</button>
+                    @endif
                 @endif
-            </td> --}}
+            </td>
         </tr>
         @empty
         <tr>

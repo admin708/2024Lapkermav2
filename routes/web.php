@@ -1,10 +1,11 @@
 <?php
 
+use App\Http\Livewire\Input\GuestRegistration;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-        return view('index');
-    })->name('home');
+    return view('index');
+})->name('home');
 
 // Route::get('/', [App\Http\Controllers\AuthController::class, 'showLogin'])->name('login');
 Route::get('/map', [App\Http\Controllers\AuthController::class, 'map'])->name('map');
@@ -15,7 +16,8 @@ Route::post('login', [App\Http\Controllers\AuthController::class, 'login']);
 Route::get('logout', [App\Http\Controllers\AuthController::class, 'logout'])->name('logout');
 Route::get('request', [App\Http\Controllers\AuthController::class, 'master'])->name('request_role');
 Route::get('/getDataKerjasama', [App\Http\Controllers\Controller::class, 'getDataKerjasama']);
-
+Route::post('register', [GuestRegistration::class, 'register'])->name('register');
+Route::post('/otpVerification', [App\Http\Controllers\AuthController::class, 'verifyOtp'])->name('verifyOtp');
 Route::middleware(['auth'])->group(function () {
 
     // Route::get('index', function () {
@@ -50,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/Menu/Edit/{id}', [App\Http\Controllers\Controller::class, 'edit'])->name('edit');
     Route::get('/Menu/LayananInformasi', [App\Http\Controllers\Controller::class, 'informasi'])->name('informasi');
 
+    Route::get('Menu/GuestInputMoU', [App\Http\Controllers\Controller::class, 'guestMouInput'])->name('guestMouInput');
 });
 
 Route::middleware(['auth', 'can:only-admin'])->group(function () {
@@ -63,10 +66,24 @@ Route::middleware(['auth', 'can:only-admin'])->group(function () {
     Route::get('/iku6', [App\Http\Controllers\Controller::class, 'iku6'])->name('iku6');
 });
 
+
+//Menampilkan Jumlah mitra
+Route::middleware(['auth', 'can:only-admin'])->group(function () {
+    // Route yang hanya bisa diakses oleh pengguna dengan role ID 1
+    Route::get('/jumlahMitra', [App\Http\Controllers\Controller::class, 'jumlahMitra'])->name('jumlahMitra');
+});
+
 //Menampilkan data kerja sama luar negeri
 Route::middleware(['auth', 'can:only-admin'])->group(function () {
     // Route yang hanya bisa diakses oleh pengguna dengan role ID 1
     Route::get('/kerjasamaluarnegeri', [App\Http\Controllers\Controller::class, 'kerjasamaluarnegeri'])->name('kerjasamaluarnegeri');
+});
+
+// Route untuk DaftarReqMoU
+Route::middleware(['auth', 'can:only-admin'])->group(function () {
+    // Route yang hanya bisa diakses oleh pengguna dengan role ID 1
+    Route::get('Menu/DaftarReqMoU', [App\Http\Controllers\Controller::class, 'DaftarReqMoU'])->name('DaftarReqMoU');
+    Route::get('Menu/DaftarUserReq', [\App\Http\Controllers\Controller::class, 'daftar_req_user'])->name('daftar-req-user');
 });
 
 //Menampilkan data IKU dalam negeri
@@ -85,6 +102,3 @@ Route::middleware(['auth', 'can:super-power'])->group(function () {
     Route::get('/add_prodi', [App\Http\Controllers\Controller::class, 'addProdi'])->name('add-prodi');
     Route::post('/add_prodi', [App\Http\Controllers\Controller::class, 'createProdi'])->name('add-prodi');
 });
-
-
-

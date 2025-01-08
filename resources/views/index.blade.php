@@ -73,7 +73,7 @@
     <div class="top-bar-area address-two-lines bg-dark text-light">
         <div class="container">
             <div class="row">
-                <div class="col-md-8 address-info">
+                <div class="col-md-2 address-info">
                     <div class="info box">
                         <ul>
                             @foreach (\App\Models\ContactInfo::where('status', 1)->get() as $item)
@@ -88,24 +88,82 @@
                         </ul>
                     </div>
                 </div>
-                @if (auth()->check())
-                    <div class="user-login text-right col-md-4">
-                        <a href="{{ route('index') }}">
-                            <i class="fas fa-table"></i> Admin Panel
+                <div style="display:flex; flex-direction:row-reverse">
+                    @if (auth()->check())
+                        <div class="user-login text-right">
+                            <a href="{{ route('index') }}">
+                                <i class="fas fa-table"></i>
+                                {{ auth()->user()->role_id == 6 ? 'Guest Input' : 'Admin Panel' }}
+                            </a>
+                        </div>
+                    @else
+                        <div class="user-login text-right">
+                            <a class="popup-with-form" href="#login-form">
+                                <i class="fas fa-user"></i> Login
+                            </a>
+                        </div>
+                    @endif
+                    <div class="user-login text-right ">
+                        <a class="popup-with-form" href="#MoU-login-form">
+                            <i class="fas fa-file-alt" style="margin-right: 5px;"></i>Request MoU
                         </a>
                     </div>
-                @else
-                    <div class="user-login text-right col-md-4">
-                        <a class="popup-with-form" href="#login-form">
-                            <i class="fas fa-user"></i> Login
+                    <div class="user-login text-right">
+                        <a class="btn btn-warning popup-with-form" data-toggle="modal" data-target="#tutorialModal">
+                            <i class="fas fa-info-circle "></i> How To Request MoU
                         </a>
                     </div>
-                @endif
+                    <div class="user-login text-right">
+                        <a class="btn btn-warning" target="_blank"
+                            href="https://drive.google.com/drive/folders/1P-8eylxcLpNNeMox1qygJHD5EzE60yNd?hl=id">
+                            <i class="fas fa-info-circle "></i> Tutorial input MoA dan IA
+                        </a>
+                    </div>
+                </div>
 
             </div>
         </div>
     </div>
     <!-- End Header Top -->
+
+    <!-- Tutorial Modal -->
+    <div class="modal fade" id="tutorialModal" tabindex="-1" aria-labelledby="tutorialModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-primary text-center w-100" id="tutorialModalLabel">Cara Melakukan
+                        Request MoU</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" style="padding: 20px;">
+                    <ol style="line-height: 1.6; padding: 20px;">
+                        <li>Log in to the Lapkerma website.</li>
+                        <li>On the main page, click the Request MoU button.</li>
+                        <li>If you do not have an account, please register first.</li>
+                        <li>After registering, a page to enter the OTP code sent via the registered email will appear.
+                            Enter the OTP code for verification.</li>
+                        <li>After contacting, the admin will verify your email. After successful verification,
+                            you can log in using that email.</li>
+                        <li>After successfully entering the main page, select the Input tab, then select MoU in the
+                            dropdown.
+                        </li>
+                        <li>Enter your data to request an MoU. You can upload the MoU document that has been prepared
+                            previously. If not, you can check the checkbox in the upper left corner
+                            to fill in the MoU data using the available template.</li>
+                        <li>After filling in all the required columns, press the Submit button.</li>
+                        <li>After pressing the Submit button, a pop-up notification will appear that your MoU request
+                            is being processed. Please wait for confirmation from the admin within 5 working days.</li>
+                    </ol>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Header
     ============================================= -->
@@ -202,6 +260,63 @@
         </div>
     </form>
     <!-- End Login Form -->
+
+    <!-- Start Guest Mou Login Form
+    ============================================= -->
+    <form action="{{ route('login') }}" method="post" id="MoU-login-form" class="mfp-hide white-popup-block">
+        <div class="mt-1 alert bg-rgba-danger mb-1" style="margin-bottom: 0px">
+            <h4>Use your App Username & Password to create an MoU!</h4>
+            @csrf
+            <div>
+                <input type="text" name="email" class="form-control" value="{{ old('email') }}"
+                    placeholder="NIP / USER APPS">
+            </div>
+            <br>
+            <div>
+                <input type="password" name="password" class="form-control" placeholder="PASSWORD" required>
+            </div>
+            @if (session('errors'))
+                <div class="mt-1 alert bg-rgba-danger mb-1" style="margin-bottom: 0px">
+                    <i class="bx bx-info-circle align-middle"></i>
+                    <span class="align-middle">
+                        @foreach ($errors->all() as $error)
+                            {{ $error }}
+                        @endforeach
+                    </span>
+                </div>
+            @endif
+            <hr>
+            <button type="submit" class="btn btn-primary btn-block">Log In</button>
+            <a class="popup-with-form" style="color:blue; text-decoration: underline;" href="#regis-form">Register if
+                you don't have an
+                account</a>
+        </div>
+    </form>
+    <!-- End Guest Mou Login Form -->
+
+    <!-- Guest Registration Form -->
+    @livewire('input.guest-registration')
+    <!-- Guest Registration Form -->
+
+    <!-- OTP Form -->
+    <form action="{{ route('verifyOtp') }}" method="POST" id="otp-form" class="mfp-hide white-popup-block">
+        @csrf
+        <div class="otp-section">
+            <h4>Enter OTP</h4>
+            <input max="6" type="text" name="otp" class="form-control" placeholder="Enter OTP"
+                required>
+            <button type="submit" class="btn btn-primary btn-block">Verify OTP</button>
+        </div>
+    </form>
+
+    <!-- OTP Form -->
+
+
+    @if (session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
 
     @livewire('dashboard-chart.search')
 
@@ -332,6 +447,9 @@
     @stack('chart-riwayatKerjasama')
     @stack('chart-statusKerjasama')
     <script>
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
         function removeClass() {
             // Mendapatkan elemen div berdasarkan ID
             var divElement = document.getElementById('myDiv');
@@ -339,6 +457,18 @@
             // Menghapus class tertentu dari elemen div
             divElement.classList.remove('on');
         }
+        document.addEventListener("DOMContentLoaded", function() {
+            // Check if the session variable for OTP form is set
+            @if (session('showOtpForm'))
+                // Trigger the display of the OTP form popup
+                $.magnificPopup.open({
+                    items: {
+                        src: '#otp-form' // The id of the OTP form
+                    },
+                    type: 'inline'
+                });
+            @endif
+        });
     </script>
 </body>
 

@@ -5,9 +5,10 @@
 
             <!-- Search Input for Prodi Name -->
             <div class="dropdown search_prodi d-flex justify-content-end">
-                <input type="text" class="form-control" wire:model="searchProdi" placeholder="Search Prodi"
+                <input type="text" class="form-control" wire:model="searchProdi" placeholder="Search Instansi / Alamat"
                     style="width: 200px;">
             </div>
+
             <div class="d-flex flex-row-reverse bd-highlight mt-3">
                 <!-- Dropdown for pagination -->
                 <div class="dropdown pagination_count">
@@ -31,23 +32,8 @@
                     </button>
                 </div>
 
-                <!-- Dropdown for Kerjasama Type -->
-                <div class="dropdown jenis_kerja_sama">
-                    <button class="btn btn-outline-primary dropdown-toggle width" style="width: 200px;" role="button"
-                        data-bs-toggle="dropdown">
-                        {{ $kerjaSamaText }}
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" wire:click="setKerjasamaId(null, 'Semua Kerja Sama')">Semua Kerja
-                                Sama</a></li>
-                        <li><a class="dropdown-item" wire:click="setKerjasamaId(1, 'Dalam Negeri')">Dalam Negeri</a>
-                        </li>
-                        <li><a class="dropdown-item" wire:click="setKerjasamaId(2, 'Luar Negeri')">Luar Negeri</a></li>
-                    </ul>
-                </div>
-
                 <!-- Dropdown for Tahun -->
-                <div class="dropdown tahun_kerja_sama px-3">
+                <div class="dropdown tahun_kerja_sama">
                     <button class="btn btn-outline-primary dropdown-toggle width" style="width: 200px;" role="button"
                         data-bs-toggle="dropdown">
                         {{ $tahunText }}
@@ -61,20 +47,25 @@
                         @endforeach
                     </ul>
                 </div>
-                <!-- Dropdown for Jenjang (Level of Study) -->
-                <div class="dropdown jenjang_dropdown ps-3">
-                    <button class="btn btn-outline-primary dropdown-toggle width" style="width: 200px;" role="button"
+
+                <!-- Dropdown for Instansi Tipe (Dalam Negeri / Luar Negeri) -->
+                <div class="dropdown instansi_jenis px-3">
+                    <button class="btn btn-outline-primary dropdown-toggle" style="width: 200px;" role="button"
                         data-bs-toggle="dropdown">
-                        {{ $jenjangText }}
+                        {{ $instansiTipeText }}
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" wire:click="setJenjang('Semua Jenjang', null)">Semua Jenjang</a>
-                        </li>
-                        <li><a class="dropdown-item" wire:click="setJenjang('Sarjana', 'sarjana')">Sarjana</a></li>
-                        <li><a class="dropdown-item" wire:click="setJenjang('Magister','magister')">Magister</a></li>
-                        <li><a class="dropdown-item" wire:click="setJenjang('Doktor', 'doktor')">Doktor</a></li>
+                        <li><a class="dropdown-item" wire:click="setInstansiTipe(null, 'Semua Instansi')">Semua
+                                Instansi</a></li>
+                        <li><a class="dropdown-item"
+                                wire:click="setInstansiTipe('dalam_negri', 'Instansi Dalam Negeri')">Instansi Dalam
+                                Negeri</a></li>
+                        <li><a class="dropdown-item"
+                                wire:click="setInstansiTipe('luar_negri', 'Instansi Luar Negeri')">Instansi Luar
+                                Negeri</a></li>
                     </ul>
                 </div>
+
                 <!-- Dropdown for Order By -->
                 <div class="dropdown order_by">
                     <button class="btn btn-outline-primary dropdown-toggle" style="width: 200px;" role="button"
@@ -82,12 +73,11 @@
                         {{ $orderByText }}
                     </button>
                     <ul class="dropdown-menu text-primary">
-                        <li class="dropdown-item" wire:click="setOrderBy('prodi_id', 'Prodi')">PRODI</li>
-                        <li class="dropdown-item" wire:click="setOrderBy('moa_reference_count', 'MoA')">MoA</li>
-                        <li class="dropdown-item" wire:click="setOrderBy('ia_reference_count', 'IA')">IA</li>
-                        <li class="dropdown-item" wire:click="setOrderBy('total_reference_count', 'Total Kerja Sama')">
-                            TOTAL
-                            KERJA SAMA</li>
+                        <li class="dropdown-item" wire:click="setOrderBy('name', 'Instansi')">Instansi</li>
+                        <li class="dropdown-item" wire:click="setOrderBy('address', 'Alamat')">Alamat</li>
+                        <li class="dropdown-item" wire:click="setOrderBy('ptqs', 'PTQS')">PTQS</li>
+                        <li class="dropdown-item" wire:click="setOrderBy('badan_kemitraan', 'Badan Kemitraan')">Badan
+                            Kemitraan</li>
                     </ul>
                 </div>
             </div>
@@ -96,27 +86,21 @@
             <table class="table table-bordered table-hover table-sm" style="font-size: 13px">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>PRODI</th>
-                        <th>MoA</th>
-                        <th>IA</th>
-                        {{-- <th>MOA PENGGIAT</th>
-                        <th>IA PENGGIAT</th> --}}
-                        <th>TOTAL KERJA SAMA</th>
-                        <th>SKOR IKU</th>
+                        <th>INSTANSI</th>
+                        <th>ALAMAT</th>
+                        <th>NEGARA</th>
+                        <th>PTQS</th>
+                        <th>BADAN KEMITRAAN</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($referenceCounts as $referenceCount)
                         <tr style="font-size: 11px">
-                            <td>{{ $referenceCount->prodi_id }}</td>
-                            <td>{{ $referenceCount->prodi_name }}</td>
-                            <td>{{ $referenceCount->moa_reference_count ?? 0 }}</td>
-                            <td>{{ $referenceCount->ia_reference_count ?? 0 }}</td>
-                            {{-- <td>{{ $referenceCount->moa_penggiat_reference_count ?? 0 }}</td>
-                            <td>{{ $referenceCount->ia_penggiat_reference_count ?? 0 }}</td> --}}
-                            <td>{{ $referenceCount->total_reference_count ?? 0 }}</td>
-                            <td>{{ $referenceCount->skor_iku ?? 0 }}</td>
+                            <td>{{ $referenceCount->name }}</td>
+                            <td>{{ $referenceCount->address }}</td>
+                            <td>{{ $referenceCount->negara_name }}</td>
+                            <td>{{ $referenceCount->ptqs ?? 0 }}</td>
+                            <td>{{ $referenceCount->badan_kemitraan ?? 0 }}</td>
                         </tr>
                     @endforeach
                 </tbody>
