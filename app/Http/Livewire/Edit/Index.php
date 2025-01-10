@@ -22,7 +22,7 @@ use App\Models\Lapkerma;
 use App\Models\Region;
 use App\Models\Negara;
 use App\Models\Prodi;
-use App\Models\Instansi;
+use App\Models\Intansi;
 use App\Models\Fakultas;
 use App\Models\KegiatanKerjasama;
 use App\Models\ReferensiSumberDanaLapkerma;
@@ -57,7 +57,7 @@ class Index extends Component
     public $negaraKerjasama, $stat1, $stat2, $stat3, $stat4, $stat5, $stat6, $stat7, $stat8, $fakultas, $prodiAll, $dasarDokKerjasama, $sumberDana;
     public $prodiEx, $prodiExNama, $getIndikatorKinerja, $getSasaranKegiatan, $jenisDokKerjasama, $dasarDokKerjasama2;
     public $uuid, $yakinHapus;
-    public $getBentukKegiatan, $getSdgs, $sdgs, $searchInstansiList = [], $idInstansi = [], $negara_pihak = [], $koordinat_pihak = [];
+    public $getBentukKegiatan, $getSdgs, $sdgs;
 
     protected $listeners = ['successMe' => 'takeSuccess',
                             'errorMe' => 'takeError',
@@ -239,31 +239,19 @@ class Index extends Component
         };
     }
 
-    public function addInstansi($formValue)
+    public function addInstansi($value,$status)
     {
-        if($formValue){
-            $instansi = Str::lower($formValue[0]);
-            if(strpos($instansi, 'unhas')){
-                $this->emit('alerts', ['pesan' => 'Data Duplikat', 'icon' => 'error']);
-            } else {
-                $create = Instansi::firstOrCreate([
-                    'name' => $formValue[0]
-                ], [
-                    'address' => $formValue[1],
-                    'negara_id' => null,
-                    'coordinates' => $formValue[2],
-                    'ptqs' =>  null,
-                    'status' =>  $formValue[3],
-                    'badan_kemitraan' => null,
-                ]);
-
-                if ($create->wasRecentlyCreated) {
-                    $this->emit('alerts', ['pesan' => 'Berhasil ditambahkan', 'icon' => 'success']);
-                } else {
-                    $this->emit('alerts', ['pesan' => 'Data Duplikat', 'icon' => 'error']);
-                };
-            }
-        }
+        $create = Intansi::firstOrCreate([
+            'nama_instansi' => $value
+        ],[
+            'status' => $status
+        ]);
+        if ($create->wasRecentlyCreated)
+        {
+        $this->emit('alerts', ['pesan' => 'Berhasil ditambahkan', 'icon'=>'success'] );
+        }else{
+        $this->emit('alerts', ['pesan' => 'Data Duplikat', 'icon'=>'error'] );
+        };
     }
 
     public function unsetFakultas($key, $id)
@@ -336,41 +324,6 @@ class Index extends Component
         $this->nama_fakultas[$key] = $nama;
         $this->fakultas_pihak[$key] = $id;
         $this->lockFakultas[$key] = 1;
-    }
-
-    public function selectInstansi($key, $id)
-    {
-        $instansi = Instansi::find($id);
-
-        if (!$instansi) {
-            // Handle the case where instansi is not found
-            session()->flash('error', 'Selected instansi not found.');
-            return;
-        }
-
-        // Assign values with safe defaults
-        $this->nama_pihak[$key] = $instansi->name;
-        $this->alamat_pihak[$key] = $instansi->address ?? '';
-        $this->negara_pihak[$key] = $instansi->negara_id ?? ($this->jenisKerjasamaField == 1 ? 103 : '');
-        $this->koordinat_pihak[$key] = $instansi->coordinates ?? '';
-        $this->ptqs[$key] = $instansi->ptqs ?? null;
-        $this->status[$key] = $instansi->status ?? null;
-        $this->badanKemitraan[$key] = $instansi->badan_kemitraan ?? null;
-        $this->idInstansi[$key] = $instansi->id;
-
-        // Additional logic for user roles
-        $user = auth()->user();
-        if ($user->role_id !== 1 && $instansi->name === 'Universitas Hasanuddin') {
-            $this->fakultas_pihak[$key] = $user->fakultas_id;
-
-            if ($user->role_id !== 4) {
-                $this->prodiPihak[$key] = [$user->prodi_id];
-                $this->arrayNamaProdi[$key] = [$user->prodi->nama_resmi ?? ''];
-            }
-        }
-
-        // Clear the search results after selection
-        $this->searchInstansiList[$key] = [];
     }
 
     public function render()
@@ -479,23 +432,6 @@ class Index extends Component
             }
           }
       }
-    }
-
-    public function updatedNamaPihak($value, $key)
-    {
-        // Normalize the input value
-        $value = trim(strtolower($value)) === 'unhas' ? 'Universitas Hasanuddin' : trim($value);
-        // Prevent fetching if the input is empty
-        if (empty($value)) {
-            $this->searchInstansiList[$key] = [];
-            $this->idInstansi[$key] = null;
-            return;
-        }
-
-        // Fetch matching instansi from the model
-        $modelInstansis = new Instansi();
-        $this->searchInstansiList[$key] = $modelInstansis->getInstansis($value);
-        $this->idInstansi[$key] = null;
     }
 
     public function validateFilter()

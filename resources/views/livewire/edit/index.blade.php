@@ -275,39 +275,30 @@
                             <div class="row">
 
                                 <div class="col-sm-12 col-lg-7 my-2">
-                                    <label class="mr-sm-2">Instansi / Universitas <i
-                                            class="small text-danger">*</i>
+                                    <label class="mr-sm-2">Instansi <i class="small text-danger">*</i>
+                                         @error('nama_pihak.'.$value) <i class="text-sm text-danger">* required</i> @enderror
                                     </label>
-                                    <div wire:loading wire:target="nama_pihak.{{ $value }}"
-                                        class="mx-1 spinner-border spinner-border-sm text-primary" role="status">
+                                    <div wire:loading wire:target="nama_pihak.{{ $value }}" class="mx-1 spinner-border spinner-border-sm text-primary" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
-                                    <div class="btn-group col-12">
-                                        <div class="input-group input-group-sm" data-bs-display="static" aria-haspopup="true" aria-expanded="true">
-                                            <input placeholder="Ketik Untuk Mencari" wire:model.debounce.500ms="nama_pihak.{{ $key }}" type="text"
-                                                class="form-control form-control-sm @error('nama_pihak.' . $value) is-invalid @enderror">
-                                            <span onclick="addInstansi()" class="input-group-text cursor-pointer d-block"><i class="bx bx-plus"></i></span>
-                                            @error('nama_pihak.' . $value)
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
+                                        <div class="btn-group col-12">
+                                            <div class="input-group input-group-sm" data-bs-display="static" aria-haspopup="true" aria-expanded="true">
+                                            <input placeholder="Ketik Untuk Mencari " {{ optional($lockInstansi)[$value] == 1 ? 'disabled':'' }}
+                                                 wire:model="nama_pihak.{{ $key }}" type="text" class="form-control form-control-sm">
+                                                 <span wire:click="clearLockInstansi({{ $key }})" class="input-group-text cursor-pointer {{ optional($lockInstansi)[$value] == 1 ? 'd-block':'d-none' }} "><i class="bx bx-x"></i></span>
+                                                 <span onclick="addInstansi()" class="input-group-text cursor-pointer {{ optional($lockInstansi)[$value] == 1 ? 'd-none':'d-block' }}"><i class="bx bx-plus"></i></span>
+                                            </div>
+                                            @php
+                                                $instansi = \App\Models\Intansi::where('nama_instansi', 'LIKE', '%'.optional($nama_pihak)[$value].'%')->paginate(10);
+                                            @endphp
+                                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start {{ optional($nama_pihak)[$value] ? (optional($lockInstansi)[$value] ? '':'show'):'' }}" data-bs-popper="static">
+                                                @forelse($instansi as $item)
+                                                <li><button wire:click="pushNamaInstansi({{ $key }},{{ $item->id }},'{{ $item->nama_instansi }}',{{ $item->status }})" class="small dropdown-item" type="button">{{ strtoupper($item->nama_instansi) }}</button></li>
+                                                @empty
+                                                <li role="button" onclick="addInstansi()" class="p-2 small">Instansi Belum tersedia, Klik untuk menambahkan</li>
+                                                @endforelse
+                                            </ul>
                                         </div>
-
-                                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start {{ isset($searchInstansiList[$key]) && count($searchInstansiList[$key]) > 0 ? 'show' : '' }}"
-                                            data-bs-popper="static">
-                                            @foreach ($searchInstansiList[$key] ?? [] as $instansi)
-                                                {{-- {{ dd($instansi) }} --}}
-                                                <li>
-                                                    <button
-                                                        wire:click="selectInstansi({{ $key }}, {{ $instansi['id'] }})"
-                                                        wire:loading.attr="disabled" class="small dropdown-item"
-                                                        type="button">
-                                                        {{ strtoupper($instansi['name'] ?? 'N/A') }}
-                                                    </button>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-
-                                    </div>
                                 </div>
 
                                 <div class="col-sm-12 col-lg-5 my-2">
@@ -454,7 +445,7 @@
                                         @default
                                     @endswitch
                                 ">
-                                <label class="mr-sm-2">Prodia <i class="small text-danger">*</i>
+                                <label class="mr-sm-2">Prodi <i class="small text-danger">*</i>
                                     @error('prodiPihak.'.$value) <i class="text-sm text-danger">* required</i> @enderror
                                 </label>
 
@@ -880,81 +871,42 @@
             })()
         }
 
-        function addInstansi() {
+        function addInstansi()
+        {
             (async () => {
-                const {
-                    value: formValues
-                } = await Swal.fire({
-                    title: 'Tambah Instansi',
-                    html: `
-                        <label for="swal-input1">Nama Instansi</label>
-                        <input id="swal-input1" class="swal2-input" required>
-                        <label for="swal-input2">Alamat Instansi</label>
-                        <textarea id="swal-input2" class="swal2-input textareas" rows="5" required></textarea>
-                        <label for="swal-input3">Kordinat Instansi</label>
-                        <textarea id="swal-input3" class="swal2-input textareas" rows="5" required></textarea>
-                        <button id="cek-cordinate" class="form-control btn btn-sm btn-secondary" disabled>Cek Cordinate</button>
-                        <br><br>`,
-                    focusConfirm: false,
-                    preConfirm: () => {
-                        const input1 = document.getElementById('swal-input1').value;
-                        const input2 = document.getElementById('swal-input2').value;
-                        const input3 = document.getElementById('swal-input3').value;
-                        if (!input1 || !input2 || !input3) {
-                            Swal.showValidationMessage('Semua input harus diisi');
-                            return false;
-                        }
-                        return [input1, input2, input3];
-                    },
-                    showCancelButton: true,
-                    didOpen: () => {
-                        const input1 = document.getElementById('swal-input1');
-                        const cekCordinate = document.getElementById('cek-cordinate');
-                        input1.addEventListener('input', function() {
-                            cekCordinate.disabled = !input1.value.trim();
-                        });
-                        cekCordinate.addEventListener('click', function(e) {
-                            if (!input1.value.trim()) {
-                                e.preventDefault();
-                                Swal.showValidationMessage('Masukkan Nama Instansi terlebih dahulu!');
-                            } else {
-                                window.open(`https://www.google.com/maps?q=${encodeURIComponent(input1.value)}`, '_blank');
-                            }
-                        });
+            const { value: instansi } = await Swal.fire({
+            input: 'text',
+            inputLabel: 'Tambah Nama Instansi',
+            showCancelButton: true
+            })
+
+            if (instansi) {
+            // Swal.fire(`Entered Mitra: ${prodiMitra}`)
+            // Livewire.emit('addInstansi',instansi)
+                    const { value: status } = await Swal.fire({
+                    input: 'select',
+                    inputLabel: 'Status Instansi',
+                    inputOptions: {
+                        '1': 'Perguruan Tinggi Negeri',
+                        '2': 'Perguruan Tinggi Swasta',
+                        '4': 'Perguruan Tinggi Luar Negeri',
+                        '3': 'Mitra',
                     }
-                });
-                if (formValues) {
-                    const status = await Swal.fire({
-                        input: 'select',
-                        inputLabel: 'Status Instansi',
-                        inputOptions: {
-                            '0': 'Pilih',
-                            '1': 'Perguruan Tinggi Negeri',
-                            '2': 'Perguruan Tinggi Swasta',
-                            '4': 'Perguruan Tinggi Luar Negeri',
-                            '3': 'Mitra',
-                        },
-                        preConfirm: (value) => {
-                            if (value == '0') {
-                                Swal.showValidationMessage('You need to select a status!');
-                                return null; // Prevent the dialog from closing
-                            }
-                            return value.toString(); // Resolve with the selected value
-                        }
-                    }).then(result => result.value);
+                    })
 
                     if (status) {
-                        formValues.push(status); // Add status to formValues
-                        Livewire.emit('addInstansi', formValues)
-                    } else {
-                        Swal.fire('Data Tidak Valid');
-                    }
-                } else {
+                    // Swal.fire(`Entered Mitra: ${prodiMitra}`)
+                    Livewire.emit('addInstansi', instansi, status)
+                    console.log(status);
+                    }else{
                     Swal.fire(`Data Tidak Valid`)
-                }
+                    }
+
+            }else{
+            Swal.fire(`Data Tidak Valid`)
+            }
             })()
         }
-
 
     /* Fungsi */
         function formatRupiah(angka)

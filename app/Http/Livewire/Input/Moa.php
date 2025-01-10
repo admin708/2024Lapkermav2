@@ -69,7 +69,6 @@ class Moa extends Component
     public $idInstansi = [], $idPejabat = [], $idPJ = [];
 
     public $getBentukKegiatan, $getIndikatorKinerja, $getSasaranKegiatan, $jenisDokKerjasama, $getProdiMitras, $getSdgs, $sdgs;
-
     protected $listeners = [
         'successMe' => 'takeSuccess',
         'errorMe' => 'takeError',
@@ -131,21 +130,64 @@ class Moa extends Component
         };
     }
 
-    public function addInstansi($formValue)
+    public function addInstansi($value)
     {
-        if($formValue){
-            $instansi = Str::lower($formValue[0]);
+        // if (strtolower($value) == 'unhas') {
+        //     $this->emit('alerts', ['pesan' => 'Data Tidak Dapat Ditambahkan', 'icon'=>'error'] );
+        // } else {
+        //     if ($status != 0) {
+        //         $create = Intansi::firstOrCreate([
+        //             'nama_instansi' => $value
+        //         ],[
+        //             'status' => $status
+        //         ]);
+        //         if ($create->wasRecentlyCreated)
+        //         {
+        //         $this->emit('alerts', ['pesan' => 'Berhasil ditambahkan', 'icon'=>'success'] );
+        //         }else{
+        //         $this->emit('alerts', ['pesan' => 'Data Duplikat', 'icon'=>'error'] );
+        //         };
+        //     } else {
+        //         $this->emit('alerts', ['pesan' => 'Gagal Silahkan Pilih Status', 'icon'=>'error'] );
+        //     }
+        // }
+
+        // if ($status != 0) {
+        //     $instansi = Str::lower($value);
+
+        //     if (strpos($instansi, 'unhas') !== false) {
+        //         // Jika $nama mengandung kata "Unhas"
+        //         $this->emit('alerts', ['pesan' => 'Gunakan Nama Uiversitas Hasanuddin', 'icon' => 'error']);
+        //     } else {
+        //         $create = Intansi::firstOrCreate([
+        //             'nama_instansi' => $value
+        //         ], [
+        //             'status' => $status
+        //         ]);
+
+        //         if ($create->wasRecentlyCreated) {
+        //             $this->emit('alerts', ['pesan' => 'Berhasil ditambahkan', 'icon' => 'success']);
+        //         } else {
+        //             $this->emit('alerts', ['pesan' => 'Data Duplikat', 'icon' => 'error']);
+        //         };
+        //     }
+        // } else {
+        //     $this->emit('alerts', ['pesan' => 'Gagal Silahkan Pilih Status', 'icon' => 'error']);
+        // }
+
+        if($value){
+            $instansi = Str::lower($value);
             if(strpos($instansi, 'unhas')){
                 $this->emit('alerts', ['pesan' => 'Data Duplikat', 'icon' => 'error']);
             } else {
                 $create = Instansi::firstOrCreate([
-                    'name' => $formValue[0]
+                    'name' => $value
                 ], [
-                    'address' => $formValue[1],
+                    'address' => '',
                     'negara_id' => null,
-                    'coordinates' => $formValue[2],
+                    'coordinates' => '',
                     'ptqs' =>  null,
-                    'status' =>  $formValue[3],
+                    'status' =>  null,
                     'badan_kemitraan' => null,
                 ]);
 
@@ -159,63 +201,110 @@ class Moa extends Component
     }
 
     public function updatedNamaPihak($value, $key)
-    {
-        // Normalize the input value
-        $value = trim(strtolower($value)) === 'unhas' ? 'Universitas Hasanuddin' : trim($value);
-        // Prevent fetching if the input is empty
-        if (empty($value)) {
-            $this->searchInstansiList[$key] = [];
-            $this->idInstansi[$key] = null;
-            return;
-        }
-
-        // Fetch matching instansi from the model
-        $modelInstansis = new Instansi();
-        $this->searchInstansiList[$key] = $modelInstansis->getInstansis($value);
+{
+    // Normalize the input value
+    $value = trim(strtolower($value)) === 'unhas' ? 'Universitas Hasanuddin' : trim($value);
+    // Prevent fetching if the input is empty
+    if (empty($value)) {
+        $this->searchInstansiList[$key] = [];
         $this->idInstansi[$key] = null;
+        return;
     }
 
+    // Fetch matching instansi from the model
+    $modelInstansis = new Instansi();
+    $this->searchInstansiList[$key] = $modelInstansis->getInstansis($value);
+    $this->idInstansi[$key] = null;
+}
 
-    public function selectInstansi($key, $id)
+
+public function selectInstansi($key, $id)
+{
+    $instansi = Instansi::find($id);
+
+    if (!$instansi) {
+        // Handle the case where instansi is not found
+        session()->flash('error', 'Selected instansi not found.');
+        return;
+    }
+
+    // Assign values with safe defaults
+    $this->nama_pihak[$key] = $instansi->name;
+    $this->alamat_pihak[$key] = $instansi->address ?? '';
+    $this->negara_pihak[$key] = $instansi->negara_id ?? 103;
+    $this->koordinat_pihak[$key] = $instansi->coordinates ?? '';
+    $this->ptqs[$key] = $instansi->ptqs ?? null;
+    $this->status[$key] = $instansi->status ?? null;
+    $this->badanKemitraan[$key] = $instansi->badan_kemitraan ?? null;
+    $this->idInstansi[$key] = $instansi->id;
+
+    // Additional logic for user roles
+    $user = auth()->user();
+    if ($user->role_id !== 1 && $instansi->name === 'Universitas Hasanuddin') {
+        $this->fakultas_pihak[$key] = $user->fakultas_id;
+
+        if ($user->role_id !== 4) {
+            $this->prodiPihak[$key] = [$user->prodi_id];
+            $this->arrayNamaProdi[$key] = [$user->prodi->nama_resmi ?? ''];
+        }
+    }
+
+    // Clear the search results after selection
+    $this->searchInstansiList[$key] = [];
+}
+
+
+public function updatedNamaPejabatPihak($value, $key)
+{
+    if (!empty($this->nama_pejabat_pihak[$key])) {
+        $this->searchPejabatList[$key] = Pejabat::select('id', 'nama')
+            ->where('nama', 'LIKE', '%' . $value . '%')
+            ->limit(10) // Limit the number of results
+            ->get()
+            ->toArray();
+    } else {
+        $this->searchPejabatList[$key] = [];
+    }
+    $this->idPejabat[$key] = null;
+}
+
+    public function updatePejabatPihak($key, $id)
     {
-        $instansi = Instansi::find($id);
+        $pejabat = Pejabat::find($id);
+        $this->nama_pejabat_pihak[$key] = $pejabat->nama;
+        $this->jabatan_pejabat_pihak[$key] = $pejabat->jabatan;
+        $this->idPejabat[$key] = $id;
+        $this->searchPejabatList[$key] = [];
+    }
 
-        if (!$instansi) {
-            // Handle the case where instansi is not found
-            session()->flash('error', 'Selected instansi not found.');
-            return;
+    public function updatedPjPihak($value, $key)
+    {
+        if (!empty($this->pj_pihak[$key])) {
+            $pjModel = new PenanggungJawab();
+            $result = $pjModel->getPj($value);
+            $this->searchPenanggungJawab[$key] = $result;
+        } else {
+            $this->searchPenanggungJawab[$key] = [];
         }
+        $this->idPJ[$key] = null;
+    }
 
-        // Assign values with safe defaults
-        $this->nama_pihak[$key] = $instansi->name;
-        $this->alamat_pihak[$key] = $instansi->address ?? '';
-        $this->negara_pihak[$key] = $instansi->negara_id ?? ($this->jenisKerjasamaField == 1 ? 103 : '');
-        $this->koordinat_pihak[$key] = $instansi->coordinates ?? '';
-        $this->ptqs[$key] = $instansi->ptqs ?? null;
-        $this->status[$key] = $instansi->status ?? null;
-        $this->badanKemitraan[$key] = $instansi->badan_kemitraan ?? null;
-        $this->idInstansi[$key] = $instansi->id;
-
-        // Additional logic for user roles
-        $user = auth()->user();
-        if ($user->role_id !== 1 && $instansi->name === 'Universitas Hasanuddin') {
-            $this->fakultas_pihak[$key] = $user->fakultas_id;
-
-            if ($user->role_id !== 4) {
-                $this->prodiPihak[$key] = [$user->prodi_id];
-                $this->arrayNamaProdi[$key] = [$user->prodi->nama_resmi ?? ''];
-            }
-        }
-
-        // Clear the search results after selection
-        $this->searchInstansiList[$key] = [];
+    public function setPJData($key, $id)
+    {
+        $pj = PenanggungJawab::find($id);
+        $this->pj_pihak[$key] = $pj->name;
+        $this->jabatan_pj_pihak[$key] = $pj->designation;
+        $this->hp_pj_pihak[$key] = $pj->phone_number;
+        $this->email_pj_pihak[$key] = $pj->email;
+        $this->idPJ[$key] = $id;
+        $this->searchPenanggungJawab = [];
     }
 
     public function mount($id = null, $val = null)
     {
+        // dd($val);
         // $this->renderSwitch = $val;
         if ($val == 3) {
-            dd('test ia');
             $this->jenis_dokumen_kerjasama = $val;
         } else {
             $this->cek_dasar_dokumen_kerjasama = $id;
@@ -257,10 +346,16 @@ class Moa extends Component
 
     public function render()
     {
+        // dd(auth()->user());
+        // if ($this->renderSwitch == 'moa') {
         $this->getProdiMitras = ProdiMitra::get();
         $this->getFakultasMitras = FakultasPihak::get();
 
         return view('livewire.input.moa');
+        // } else {
+        //     return view('livewire.input.ia');
+        // }
+
     }
 
     public function redirek()
@@ -623,6 +718,10 @@ class Moa extends Component
                             ]);
                         }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ee691c0a3560ea83f3411ce241068e438aeda9e2
                         foreach ($this->inputs as $key => $value) {
                             $storePenggiatKerjasama = DataMoaPenggiat::create([
                                 'id_lapkerma' => $store->id,
@@ -647,13 +746,36 @@ class Moa extends Component
                                     'badan_kemitraan' => $this->lainnya[$key]
                                 ]);
                             }
+                            $storePJ = PenanggungJawab::updateOrCreate(
+                                [
+                                    'name' => $this->pj_pihak[$value] ?? null,
+                                ],
+                                [
+                                    'designation' => $this->jabatan_pj_pihak[$value] ?? null,
+                                    'email' => $this->email_pj_pihak[$value] ?? null,
+                                    'phone_number' => $this->hp_pj_pihak[$value] ?? null
+                                ]
+                            );
+
+                            $storePejabat = Pejabat::updateOrCreate(
+                                [
+                                    'nama' => $this->nama_pejabat_pihak[$value] ?? null,
+                                ],
+                                [
+                                    'jabatan' => $this->jabatan_pejabat_pihak[$value] ?? null
+                                ]
+
+                            );
 
                             $storeInstansi = Instansi::updateOrCreate(
                                 [
                                     'name' => $this->nama_pihak[$value] ?? null,
                                 ],
                                 [
-                                    'negara_id' => $this->jenisKerjasamaField == 1 ? 103 : $this->negara_pihak[$value],
+
+                                    'address' => $this->alamat_pihak[$value],
+                                    'negara_id' => $this->negara_pihak[$value],
+                                    'coordinates' => $this->koordinat_pihak[$value] ?? '',
                                     'ptqs' => $this->ptqs[$value] ?? null,
                                     'status' => $this->status[$value] ?? null,
                                     'badan_kemitraan' => isset($this->ptqs[$key]) && $this->negara_pihak[$value] == 103 && ($this->ptqs[$key] == 1 || $this->ptqs[$key] == 2)
@@ -668,7 +790,20 @@ class Moa extends Component
                                     'badan_kemitraan' => $this->lainnya[$value] ?? null
                                 ]);
                             }
+
+                            $storePenggiatKerjasama2 = MoaPenggiat::create(
+                                [
+                                    'id_lapkerma' => $store->id,
+                                    'id_pihak' => $storeInstansi->id,
+                                    'pihak' => $this->nama_pihak[$value],
+                                    'id_pj' => $storePJ->id,
+                                    'id_pejabat' => $storePejabat->id,
+                                    'fakultas_pihak' => $this->fakultas_pihak[$key] ?? null,
+                                    'prodi' => json_encode(optional($this->prodiPihak)[$key]) ?? null,
+                                ]
+                            );
                         }
+
 
                         foreach ($this->arrayBentukKegiatan as $key => $value) {
                             $storeBentukKegiatanKerjasama = DataMoaBentukKegiatanKerjasama::create([
@@ -680,11 +815,13 @@ class Moa extends Component
                                 'id_ref_bentuk_kegiatan' => $value,
                                 'id_ref_indikator_kinerja' => $this->arrayKinerja[$key] ?? null,
                                 'id_ref_sasaran_kegiatan' => $this->arraySasaran[$key] ?? null,
+                                // 'id_sdgs' => $this->arraySdgs[$key]??null,
+                                // 'id_sdgs' => $this->sdgs??null,
                             ]);
                         }
                         DB::commit();
                         $this->emit('alerts', ['pesan' => 'Data Berhasil Ditambahkan', 'icon' => 'success']);
-                        // dd($store);
+                        dd($store);
                     } else {
                         $this->emit('alerts', ['pesan' => 'Invalid Proses, Data Duplikat', 'icon' => 'error']);
                     }

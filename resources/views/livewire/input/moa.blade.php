@@ -1,12 +1,5 @@
 <div>
-    <style>
-        .textareas
-        {
-            height: 70px !important;
-        }
-    </style>
     @if ($jenis_dokumen_kerjasama)
-    {{-- @dd($jenis_dokumen_kerjasama) --}}
     @else
         @if ($cek_dasar_dokumen_kerjasama)
             <div class="modal fade show" id="backDropModal" data-bs-backdrop="static" tabindex="-1"
@@ -392,12 +385,17 @@
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
                                         <div class="btn-group col-12">
-                                            <div class="input-group input-group-sm" data-bs-display="static" aria-haspopup="true" aria-expanded="true">
-                                                <input placeholder="Ketik Untuk Mencari" wire:model.debounce.500ms="nama_pihak.{{ $key }}" type="text"
+                                            <div class="input-group input-group-sm" data-bs-display="static"
+                                                aria-haspopup="true" aria-expanded="true">
+                                                <input placeholder="Ketik Untuk Mencari"
+                                                    wire:model.debounce.500ms="nama_pihak.{{ $key }}"
+                                                    type="text"
                                                     class="form-control form-control-sm @error('nama_pihak.' . $value) is-invalid @enderror">
-                                                <span onclick="addInstansi()" class="input-group-text cursor-pointer d-block"><i class="bx bx-plus"></i></span>
+                                                <span onclick="addInstansi()"
+                                                    class="input-group-text cursor-pointer d-block"><i
+                                                        class="bx bx-plus"></i></span>
                                                 @error('nama_pihak.' . $value)
-                                                <div class="invalid-feedback">{{ $message }}</div>
+                                                    <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
 
@@ -417,11 +415,46 @@
                                             </ul>
 
                                         </div>
+                                        {{-- <div class="input-group input-group-sm" data-bs-display="static"
+                                                aria-haspopup="true" aria-expanded="true">
+                                                <input placeholder="Ketik Untuk Mencari "
+                                                    {{ optional($lockInstansi)[$value] == 1 ? 'disabled' : '' }}
+                                                    wire:model="nama_pihak.{{ $key }}" type="text"
+                                                    class="form-control form-control-sm">
+                                                <span wire:click="clearLockInstansi({{ $key }})"
+                                                    class="input-group-text cursor-pointer {{ optional($lockInstansi)[$value] == 1 ? 'd-block' : 'd-none' }} "><i
+                                                        class="bx bx-x"></i></span>
+                                                <span onclick="addInstansi()"
+                                                    class="input-group-text cursor-pointer {{ optional($lockInstansi)[$value] == 1 ? 'd-none' : 'd-block' }}"><i
+                                                        class="bx bx-plus"></i></span>
+                                            </div>
+                                            @php
+                                                $instansi = \App\Models\Intansi::where(
+                                                    'nama_instansi',
+                                                    'LIKE',
+                                                    '%' . optional($nama_pihak)[$value] . '%',
+                                                )->paginate(10);
+                                            @endphp
+                                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start {{ optional($nama_pihak)[$value] ? (optional($lockInstansi)[$value] ? '' : 'show') : '' }}"
+                                                data-bs-popper="static">
+                                                @forelse($instansi as $item)
+                                                    <li><button
+                                                            wire:click="getAndSetPihakName({{ $key }}, {{ json_encode($item->name) }}, {{ json_encode($item->address) }}, {{ $item->status }}, {{ $item->negara_id }}, {{ $item->coordinates }}, {{ $item->ptqs }}, {{ $item->badan_kemitraan }})"
+                                                            class="small dropdown-item"
+                                                            type="button">{{ strtoupper($item->name) }}</button>
+                                                    </li>
+
+                                                @empty
+                                                    <li role="button" onclick="addInstansi()" class="p-2 small">
+                                                        Instansi Belum tersedia, Klik untuk menambahkan</li>
+                                                @endforelse
+                                            </ul>
+                                        </div> --}}
                                     </div>
 
                                     <div class="col-sm-12 col-lg-5 my-2">
                                         <label class="mr-sm-2">Status</label>
-                                        <select wire:model="status.{{ $value }}" disabled
+                                        <select wire:model="status.{{ $value }}"
                                             class="form-select form-select-sm mr-sm-2 @error('status.' . $value) is-invalid @enderror ">
                                             <option></option>
                                             <option value="1">Perguruan Tinggi Negeri</option>
@@ -526,11 +559,15 @@
                                                     )->get();
                                                 } else {
                                                     $prodiMitras = \App\Models\Prodi::where(
-                                                        'id_fakultas', auth()->user()->fakultas_id,
+                                                        'id_fakultas',
+                                                        auth()->user()->fakultas_id,
                                                     )
-                                                    // ->whereNot('id', auth()->user()->prodi_id)
-                                                    ->get();
+                                                        // ->whereNot('id', auth()->user()->prodi_id)
+                                                        ->get();
                                                 }
+
+                                                // $prodiMitras = \App\Models\Prodi::where('id_fakultas', auth()->user()->fakultas_id)->whereNot('id', auth()->user()->prodi_id)->get();
+
                                             @endphp
                                             <div class="btn-group col-12">
                                                 <div class="input-group input-group-sm" data-bs-display="static"
@@ -721,7 +758,7 @@
                                 @enderror
 
                             </div>
-                            <div class="col-auto my-2 {{$jenisKerjasamaField == 2 ? 'd-block':'d-none'}} ">
+                            <div class="col-auto my-2">
                                 <label class="mr-sm-2">Negara Instansi</label>
                                 <select wire:model="negara_pihak.{{ $value }}"
                                     class="form-select form-select-sm
@@ -732,6 +769,20 @@
                                     @endforeach
                                 </select>
                                 @error('negara_pihak.' . $value)
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-auto my-2">
+                                <label class="mr-sm-2">Cek Koordinat / Coordinates Check</label>
+                                <a href="https://www.google.com/maps?q={{ urlencode($nama_pihak[$value] ?? '') }}"
+                                    target="blank" class="form-control btn btn-sm btn-secondary">click</a>
+                            </div>
+                            <div class="col-auto my-2">
+                                <label class="mr-sm-2">Koordinat Instansi / Institute
+                                    Coordinates</label>
+                                <input required wire:model="koordinat_pihak.{{ $value }}" type="text"
+                                    class="form-control form-control-sm @error('koordinat_pihak.' . $value) is-invalid @enderror">
+                                @error('koordinat_pihak.' . $value)
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -750,7 +801,7 @@
                                         <div class="btn-group col-12">
                                             <div class="input-group input-group-sm @error('nama_pejabat_pihak.' . $value) is-invalid @enderror"
                                                 data-bs-display="static" aria-haspopup="true" aria-expanded="true">
-                                                <input
+                                                <input placeholder="Ketik Untuk Mencari"
                                                     wire:model.debounce.500ms="nama_pejabat_pihak.{{ $key }}"
                                                     type="text"
                                                     class="form-control form-control-sm @error('nama_pejabat_pihak.' . $value) is-invalid @enderror">
@@ -758,6 +809,21 @@
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
+
+
+                                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start {{ !empty($searchPejabatList[$key]) ? 'show' : '' }}"
+                                                data-bs-popper="static">
+                                                @foreach ($searchPejabatList[$key] ?? [] as $pejabat)
+                                                    <li>
+                                                        <button
+                                                            wire:click="updatePejabatPihak({{ $key }}, {{ $pejabat['id'] }})"
+                                                            class="small dropdown-item" type="button">
+                                                            {{ strtoupper($pejabat['nama']) }}
+                                                        </button>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+
                                         </div>
                                     </div>
                                     <div class="col-sm-12 col-lg-6">
@@ -783,7 +849,7 @@
                                         <div class="btn-group col-12">
                                             <div class="input-group input-group-sm" data-bs-display="static"
                                                 aria-haspopup="true" aria-expanded="true">
-                                                <input 
+                                                <input placeholder="Ketik Untuk Mencari"
                                                     wire:model.debounce.500ms="pj_pihak.{{ $key }}"
                                                     type="text"
                                                     class="form-control form-control-sm @error('pj_pihak.' . $value) is-invalid @enderror">
@@ -791,6 +857,19 @@
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
                                             </div>
+
+                                            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start {{ isset($searchPenanggungJawab[$key]) && count($searchPenanggungJawab[$key]) > 0 ? 'show' : '' }}"
+                                                data-bs-popper="static">
+                                                @foreach ($searchPenanggungJawab[$key] ?? [] as $pj)
+                                                    <li>
+                                                        <button
+                                                            wire:click="setPJData({{ $key }}, {{ $pj['id'] }} )"
+                                                            class="small dropdown-item"
+                                                            type="button">{{ strtoupper($pj['name']) }}
+                                                        </button>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
                                         </div>
                                     </div>
                                     <div class="col-sm-12 col-lg-6">
@@ -968,6 +1047,19 @@
                                         </select>
                                     </div>
                                 </div>
+                                {{-- <div class="col-auto">
+                                <div class="col-sm-12">
+                                    <label class="@error('arraySdgs.' . $key) text-danger @enderror">SDGS <i class="small text-danger">*</i></label>
+                                </div>
+                                <div class="col-sm-12">
+                                    <select class="form-select form-select-sm" aria-hidden="true" wire:model="arraySdgs.{{ $key }}">
+                                        <option></option>
+                                        @foreach ($getSdgs as $itemz)
+                                            <option value="{{ $itemz->id }}">{{ $itemz->id }} | {{ $itemz->nama }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div> --}}
                             </div>
                         </div>
                         <script>
@@ -985,86 +1077,8 @@
     </div>
 
     @push('custom-scripts')
-        <script src="assetss/js/extended-ui-perfect-scrollbar.js"></script>
-
-        <script>
-            function addInstansi() {
-                (async () => {
-                    const {
-                        value: formValues
-                    } = await Swal.fire({
-                        title: 'Tambah Instansi',
-                        html: `
-                            <label for="swal-input1">Nama Instansi</label>
-                            <input id="swal-input1" class="swal2-input" required>
-                            <label for="swal-input2">Alamat Instansi</label>
-                            <textarea id="swal-input2" class="swal2-input textareas" rows="5" required></textarea>
-                            <label for="swal-input3">Kordinat Instansi</label>
-                            <textarea id="swal-input3" class="swal2-input textareas" rows="5" required></textarea>
-                            <button id="cek-cordinate" class="form-control btn btn-sm btn-secondary" disabled>Cek Cordinate</button>
-                            <br><br>`,
-                        focusConfirm: false,
-                        preConfirm: () => {
-                            const input1 = document.getElementById('swal-input1').value;
-                            const input2 = document.getElementById('swal-input2').value;
-                            const input3 = document.getElementById('swal-input3').value;
-                            if (!input1 || !input2 || !input3) {
-                                Swal.showValidationMessage('Semua input harus diisi');
-                                return false;
-                            }
-                            return [input1, input2, input3];
-                        },
-                        showCancelButton: true,
-                        didOpen: () => {
-                            const input1 = document.getElementById('swal-input1');
-                            const cekCordinate = document.getElementById('cek-cordinate');
-                            input1.addEventListener('input', function() {
-                                cekCordinate.disabled = !input1.value.trim();
-                            });
-                            cekCordinate.addEventListener('click', function(e) {
-                                if (!input1.value.trim()) {
-                                    e.preventDefault();
-                                    Swal.showValidationMessage('Masukkan Nama Instansi terlebih dahulu!');
-                                } else {
-                                    window.open(`https://www.google.com/maps?q=${encodeURIComponent(input1.value)}`, '_blank');
-                                }
-                            });
-                        }
-                    });
-                    if (formValues) {
-                        const status = await Swal.fire({
-                            input: 'select',
-                            inputLabel: 'Status Instansi',
-                            inputOptions: {
-                                '0': 'Pilih',
-                                '1': 'Perguruan Tinggi Negeri',
-                                '2': 'Perguruan Tinggi Swasta',
-                                '4': 'Perguruan Tinggi Luar Negeri',
-                                '3': 'Mitra',
-                            },
-                            preConfirm: (value) => {
-                                if (value == '0') {
-                                    Swal.showValidationMessage('You need to select a status!');
-                                    return null; // Prevent the dialog from closing
-                                }
-                                return value.toString(); // Resolve with the selected value
-                            }
-                        }).then(result => result.value);
-
-                        if (status) {
-                            formValues.push(status); // Add status to formValues
-                            Livewire.emit('addInstansi', formValues)
-                        } else {
-                            Swal.fire('Data Tidak Valid');
-                        }
-                    } else {
-                        Swal.fire(`Data Tidak Valid`)
-                    }
-                })()
-            }
-
-        </script>
         <!-- Page JS -->
+        <script src="assetss/js/extended-ui-perfect-scrollbar.js"></script>
         <script>
             function checkFileUploadExt(fieldObj) {
                 var control = document.getElementById("uploadFiles");
@@ -1149,6 +1163,24 @@
                     if (fakultasMitra) {
                         // Swal.fire(`Entered Mitra: ${prodiMitra}`)
                         Livewire.emit('addFakultasMitra', fakultasMitra)
+                    } else {
+                        Swal.fire(`Data Tidak Valid`)
+                    }
+                })()
+            }
+
+            function addInstansi() {
+                (async () => {
+                    const {
+                        value: instansi
+                    } = await Swal.fire({
+                        input: 'text',
+                        inputLabel: 'Tambah Nama Instansi',
+                        showCancelButton: true
+                    })
+
+                    if (instansi) {
+                        Livewire.emit('addInstansi', instansi)
                     } else {
                         Swal.fire(`Data Tidak Valid`)
                     }
